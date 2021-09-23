@@ -1,0 +1,32 @@
+# Task 5.7*
+# Run the module modules/mod_a.py. Check its result. Explain why does this happen.
+
+Result:
+>>>5
+
+We imported the modules "mod_b.py" and "mod_c.py" into a module "mod_a.py".
+As a result, the value from "mod_b.py" is used, because it was imported later.
+
+# Try to change x to a list [1,2,3]. Explain the result.
+
+Result:
+>>>5
+
+When we replaced the value of x with [1,2,3] in module "mod_c.py",
+the result is still 5, because the value from "mod_b.py" is used
+
+# Try to change import to from x import * where x - module names. Explain the result.
+
+If "mod_a.py" is like this:
+--------------------
+from mod_c import *
+from mod_b import *
+
+print(mod_c.x)
+--------------------
+
+Result:
+>>>5
+
+the result is still 5, because the value "mod_c.x" imported from "mod_b.py".
+
