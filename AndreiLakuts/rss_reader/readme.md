@@ -4,11 +4,27 @@
 
 Author: Andrei Lakuts
 
-
 RSS reader is a command-line utility which receives RSS URL 
 and prints results to stdout. 
 
 ##Program runs on pure Python and doesn't require installation of additional modules. 
+
+##Installation:
+
+In Version 1.2 added the ability to install rss_reader as CLI-utility. 
+You cal install it from "dist" folder in your Python environment like this:
+
+In OS Windows:
+
+   - pip install rss_reader-1.2.zip
+   
+In OS Linux:
+
+   - pip install rss_reader-1.2.tar.gz
+
+Program also works without installation.
+
+
 
 ##Usage: 
 
@@ -35,6 +51,10 @@ optional arguments:
 If --limit (int) is specified the same amount of news will be printed. 
 If --limit is not specified or is larger than feed size then all available news will be printed:
 
+   - if program is installed
+#####rss_reader https://news.yahoo.com/rss/ --limit 2
+
+   - if program is not installed
 #####python rss_reader.py https://news.yahoo.com/rss/ --limit 2
 
 Feed: Yahoo News - Latest News & Headlines
@@ -72,6 +92,10 @@ Source: The Conversation
 
 If --version is specified program prints prints its version and stops:
 
+   - if program is installed
+#####rss_reader --version
+   
+   - if program is not installed
 #####python rss_reader.py --version
 
 "Version 1.2" 
@@ -101,6 +125,10 @@ If --version is specified program prints prints its version and stops:
 
 If --json is specified program prints news to stdout in JSON format:
 
+   - if program is installed
+#####rss_reader https://news.yahoo.com/rss/ --limit 2 --json
+
+   - if program is not installed
 #####python rss_reader.py https://news.yahoo.com/rss/ --limit 2 --json
 
     {
@@ -130,6 +158,10 @@ If --json is specified program prints news to stdout in JSON format:
 
 If --verbose is specified program prints logs to stdout:
 
+   - if program is installed
+#####rss_reader https://news.yahoo.com/rss/ --limit 1 --verbose
+   
+   - if program is not installed
 #####python rss_reader.py https://news.yahoo.com/rss/ --limit 1 --verbose
 
 Start program.
@@ -197,6 +229,10 @@ Program execution completed!
 
 If URL is wrong program prints error-message to stdout:
 
+   - if program is installed
+#####rss_reader https://news.yahoo.m/rss/   
+   
+   - if program is not installed
 #####python rss_reader.py https://news.yahoo.m/rss/
 
 Exception <urlopen error [Errno 11001] getaddrinfo failed> - wrong URL! The program is stopped.
