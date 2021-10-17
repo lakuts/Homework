@@ -1,6 +1,6 @@
 #RSS-reader.
 
-##Version 1.1
+##Version 1.2
 
 Author: Andrei Lakuts
 
@@ -74,7 +74,7 @@ If --version is specified program prints prints its version and stops:
 
 #####python rss_reader.py --version
 
-"Version 1.1" 
+"Version 1.2" 
 
 -------------------------------------------------
 ###JSON format description:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-[Iteration 1] One-shot command-line RSS reader.
+[Iteration 2] One-shot command-line RSS reader.
 """
 
 from urllib.request import urlopen
@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 import argparse
 import json
 
-VERSION = "Version 1.1"
+VERSION = "Version 1.2"
 
 
 class RssParser:
@@ -191,6 +191,7 @@ class RssParser:
 
     def print_if_verbose(self, log):
         """Method prints logs in stdout"""
+
         if self.verbose:
             print(log)
             return log
@@ -201,6 +202,7 @@ def main_program():
     Main program: gets input parameters and creates RssParser-class object with these parameters.
     :return: None
     """
+
     parser = argparse.ArgumentParser(description="Pure Python command-line RSS reader.")
 
     parser.add_argument("source", type=str, nargs="?", help="RSS URL")

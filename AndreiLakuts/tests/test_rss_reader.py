@@ -13,6 +13,8 @@ bad_source = "https://news.yaho.cm/rss/"
 
 
 class TestRssParser(unittest.TestCase):
+    """TestRssParser class contains tests for RssParser"""
+
     def setUp(self):
         """setUp"""
 
@@ -30,7 +32,7 @@ class TestRssParser(unittest.TestCase):
         """Tests for RssParser.run_pursing"""
 
         # Test "--version"
-        self.assertEqual(self.test_version_rss_reader.run_parsing(), "Version 1.1")
+        self.assertEqual(self.test_version_rss_reader.run_parsing(), "Version 1.2")
         # Test wrong limit "--limit -3"
         self.assertEqual(self.test_bad_limit_rss_reader.run_parsing(), "Limit must be greater than 0!")
 
