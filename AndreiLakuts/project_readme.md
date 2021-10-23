@@ -1,5 +1,5 @@
 # RSS reader.
-##Version 1.2
+##Version 1.3
 
 
 Author: Andrei Lakuts 
@@ -9,3 +9,10 @@ Author: Andrei Lakuts
 ###Directory "tests" contains unit-tests for RSS-reader.
 
 ###Directory "dist" contains RSS-reader installation packages.
+
+RSS parser was tested with these feeds:
+   - https://news.yahoo.com/rss
+   - https://people.onliner.by/feed
+   - https://news.rambler.ru/rss/Vladikavkaz
+   - https://news.google.com/rss
+   - https://feeds.simplecast.com/54nAGcIl  

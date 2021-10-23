@@ -1,6 +1,6 @@
 #RSS-reader.
 
-##Version 1.2
+##Version 1.3
 
 Author: Andrei Lakuts
 
@@ -11,16 +11,15 @@ and prints results to stdout.
 
 ##Installation:
 
-In Version 1.2 added the ability to install rss_reader as CLI-utility. 
-You cal install it from "dist" folder in your Python environment like this:
+You cal install rss_reader as CLI-utility from "dist" folder in your Python environment like this:
 
 In OS Windows:
 
-   - pip install rss_reader-1.2.zip
+   - pip install rss_reader-1.3.zip
    
 In OS Linux:
 
-   - pip install rss_reader-1.2.tar.gz
+   - pip install rss_reader-1.3.tar.gz
 
 Program also works without installation.
 
@@ -28,7 +27,7 @@ Program also works without installation.
 
 ##Usage: 
 
-rss_reader.py [-h] [--version] [--json] [--verbose] [--limit LIMIT] [source]
+rss_reader.py [-h] [--version] [--json] [--verbose] [--limit LIMIT] [--date DATE] [source]
 
 Pure Python command-line RSS reader.
 
@@ -43,6 +42,7 @@ optional arguments:
      --json         Print result as JSON in stdout
      --verbose      Outputs verbose status messages
      --limit LIMIT  Limit (int) news topics if this parameter provided
+     --date DATE    Date (str) in format YYYYMMDD. Print news from cache for this date
 
 -------------------------------------------------------------------------------------------------
 
@@ -52,10 +52,10 @@ If --limit (int) is specified the same amount of news will be printed.
 If --limit is not specified or is larger than feed size then all available news will be printed:
 
    - if program is installed
-#####rss_reader https://news.yahoo.com/rss/ --limit 2
+#####rss_reader https://news.yahoo.com/rss --limit 2
 
    - if program is not installed
-#####python rss_reader.py https://news.yahoo.com/rss/ --limit 2
+#####python rss_reader.py https://news.yahoo.com/rss --limit 2
 
 Feed: Yahoo News - Latest News & Headlines
 
@@ -98,7 +98,7 @@ If --version is specified program prints prints its version and stops:
    - if program is not installed
 #####python rss_reader.py --version
 
-"Version 1.2" 
+"Version 1.3" 
 
 -------------------------------------------------
 ###JSON format description:
@@ -126,10 +126,10 @@ If --version is specified program prints prints its version and stops:
 If --json is specified program prints news to stdout in JSON format:
 
    - if program is installed
-#####rss_reader https://news.yahoo.com/rss/ --limit 2 --json
+#####rss_reader https://news.yahoo.com/rss --limit 2 --json
 
    - if program is not installed
-#####python rss_reader.py https://news.yahoo.com/rss/ --limit 2 --json
+#####python rss_reader.py https://news.yahoo.com/rss --limit 2 --json
 
     {
        "Feed": "Yahoo News - Latest News & Headlines",
@@ -159,10 +159,10 @@ If --json is specified program prints news to stdout in JSON format:
 If --verbose is specified program prints logs to stdout:
 
    - if program is installed
-#####rss_reader https://news.yahoo.com/rss/ --limit 1 --verbose
+#####rss_reader https://news.yahoo.com/rss --limit 1 --verbose
    
    - if program is not installed
-#####python rss_reader.py https://news.yahoo.com/rss/ --limit 1 --verbose
+#####python rss_reader.py https://news.yahoo.com/rss --limit 1 --verbose
 
 Start program.
 
@@ -230,9 +230,61 @@ Program execution completed!
 If URL is wrong program prints error-message to stdout:
 
    - if program is installed
-#####rss_reader https://news.yahoo.m/rss/   
+#####rss_reader https://news.yahoo.m/rss   
    
    - if program is not installed
-#####python rss_reader.py https://news.yahoo.m/rss/
+#####python rss_reader.py https://news.yahoo.m/rss
 
 Exception <urlopen error [Errno 11001] getaddrinfo failed> - wrong URL! The program is stopped.
+
+-------------------------------------------------------------------------------------------------
+
+At runtime, the program saves data to the local cache in JSON-file "rss_reader_cache.json" in the subfolder "cache".
+Cache file structure:
+
+    [
+       {
+          "https://news.yahoo.com/rss": [
+             {
+                "Title": "Employee who killed gunman likely saved lives, police say",
+                "Link": "https://news.yahoo.com/employee-killed-gunman-likely-saved-211530368.html",
+                "PubDate": "20211022",
+                "Source": "Associated Press"
+             },
+             {
+                "Title": "A 55-year-old mother of 9 was sentenced to death by hanging over possessing around 4 ounces of meth",
+                "Link": "https://news.yahoo.com/55-old-mother-9-sentenced-054433946.html",
+                "PubDate": "20211022",
+                "Source": "INSIDER"
+             }
+             ...
+             
+             ...
+          ]
+       }
+    ]
+
+
+
+##Example 6.  
+
+If --date in format YYYYMMDD is specified, for example "--date 20211023", program gets news from a local cache
+for :
+
+   - if program is installed
+#####rss_reader --date 20211023 --limit 1 
+   
+   - if program is not installed
+#####python rss_reader.py --date 20211023 --limit 1
+
+Title: Every Day, Biden Smells Like More of a Loser
+Link: https://news.yahoo.com/every-day-biden-smells-more-033653915.html
+PubDate: 20211023
+Source: The Daily Beast
+
+
+-------------------------------------------------------------------------------------------------
+
+If --date specified together with RSS source, then program gets news for this date from 
+local cache that were fetched from specified source. Parameter --date also works correctly 
+with both --json, --limit, --verbose and their different combinations.

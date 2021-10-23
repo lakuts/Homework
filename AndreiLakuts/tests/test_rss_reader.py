@@ -8,8 +8,50 @@ from rss_reader.rss_reader import RssParser
 
 # Correct URL fot tests.
 good_source = "https://news.yahoo.com/rss/"
+
 # Wrong URL for tests
 bad_source = "https://news.yaho.cm/rss/"
+
+# test_rss_feed for test print_content_from_cache() method
+test_rss_feed = [{
+    'Title': "Test title",
+    'Link': 'https://test.link.com',
+    'PubDate': '20211022',
+    'Source': 'Test source'
+}]
+
+# test_rss_feed for test save_news_to_cache() method
+test_to_cache_rss_feed = {
+    'Feed': 'Test Feed',
+    'Description': 'Test Description',
+    'Link': 'https://news.yahoo.com/rss/',
+    'Language': 'en-US',
+    'News': [
+        {'Title': "Test Title",
+         'Link': 'https://test.link.com/test.html',
+         'PubDate': '20211022',
+         'Source': 'Test Source'}
+    ]
+}
+
+# test result for test save_news_to_cache() method
+test_to_cache_rss_feed_result = [
+    {'https://news.yahoo.com/rss/': [
+        {'Link': 'https://test.link.com/test.html',
+         'PubDate': '20211022',
+         'Source': 'Test Source',
+         'Title': 'Test Title'}
+    ]
+    }
+]
+
+# test result for test get_content_from_cache() method
+test_from_cache_rss_feed_result = [
+    {'Link': 'https://test.link.com/test.html',
+     'PubDate': '20211022',
+     'Source': 'Test Source',
+     'Title': 'Test Title'}
+]
 
 
 class TestRssParser(unittest.TestCase):
@@ -19,11 +61,15 @@ class TestRssParser(unittest.TestCase):
         """setUp"""
 
         self.test_good_source_rss_reader = RssParser(good_source, verbose=True, version=False, json=False,
-                                                     limit=3)
+                                                     limit=3, date=None)
         self.test_bad_source_rss_reader = RssParser(bad_source, verbose=False, version=False, json=False,
-                                                    limit=None)
-        self.test_version_rss_reader = RssParser(good_source, verbose=False, version=True, json=False, limit=3)
-        self.test_bad_limit_rss_reader = RssParser(good_source, verbose=False, version=False, json=False, limit=-3)
+                                                    limit=None, date=None)
+        self.test_version_rss_reader = RssParser(good_source, verbose=False, version=True, json=False, limit=3,
+                                                 date=None)
+        self.test_bad_limit_rss_reader = RssParser(good_source, verbose=False, version=False, json=False, limit=-3,
+                                                   date=None)
+        self.test_date_rss_reader = RssParser(good_source, verbose=False, version=False, json=False, limit=2,
+                                              date=20211022)
         self.content = self.test_good_source_rss_reader.get_content()
         self.rss_feed = self.test_good_source_rss_reader.process_content(self.content)
         self.limit_rss_feed = self.test_good_source_rss_reader.process_content(self.content)
@@ -32,7 +78,7 @@ class TestRssParser(unittest.TestCase):
         """Tests for RssParser.run_pursing"""
 
         # Test "--version"
-        self.assertEqual(self.test_version_rss_reader.run_parsing(), "Version 1.2")
+        self.assertEqual(self.test_version_rss_reader.run_parsing(), "Version 1.3")
         # Test wrong limit "--limit -3"
         self.assertEqual(self.test_bad_limit_rss_reader.run_parsing(), "Limit must be greater than 0!")
 
@@ -76,6 +122,28 @@ class TestRssParser(unittest.TestCase):
 
         # Test: if URL is wrong RssParser.get_content returns None"
         self.assertEqual(self.test_bad_source_rss_reader.get_content(), None)
+
+    def test_print_content_from_cache(self):
+        """Test for RssParser.print_content_from_cache"""
+
+        self.assertEqual(self.test_good_source_rss_reader.print_content_from_cache(test_rss_feed),
+                         "Content is printed from cache")
+
+    def test_save_news_to_cache(self):
+        """Test for RssParser.save_news_to_cache"""
+
+        self.assertEqual(self.test_good_source_rss_reader.save_news_to_cache(test_to_cache_rss_feed),
+                         test_to_cache_rss_feed_result)
+
+    def test_get_content_from_cache(self):
+        """Test for RssParser.get_content_from_cache"""
+
+        self.assertEqual(self.test_date_rss_reader.get_content_from_cache(), test_from_cache_rss_feed_result)
+
+    def test_runparsing(self):
+        """Test for RssParser.run_parsing"""
+
+        self.assertEqual(self.test_date_rss_reader.run_parsing(), "Program execution completed!")
 
 
 if __name__ == '__main__':
