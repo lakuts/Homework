@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 
 """
-[Iteration 3] One-shot command-line RSS reader.
+[Iteration 4] One-shot command-line RSS reader.
 """
 
 from urllib.request import urlopen
+from urllib.request import urlretrieve
 from datetime import datetime
 import xml.etree.ElementTree as ET
 import argparse
 import json
 import os
+import base64
 
-VERSION = "Version 1.3"
+VERSION = "Version 1.4"
 
 
 class RssParser:
     """Basic rss parser class. Contains methods for receiving and processing RSS channels"""
 
-    def __init__(self, source: str, version: bool, json: bool, verbose: bool, limit: int, date: int):
+    def __init__(self, source: str, version: bool, json: bool, verbose: bool, limit: int, date: int, to_html: str,
+                 to_fb2: str):
         """
         __init__ method
 
@@ -27,6 +30,8 @@ class RssParser:
         :param verbose: bool, if True prints logs to stdout
         :param limit: int, number of printed news. If not specified, print all available news.
         :param date: int, date in format YYYYMMDD. If specified, print news from cache for this date.
+        :param to_html: str, path to folder. If specified, save news to this folder in file rss_news.html.
+        :param to_fb2: str, path to folder. If specified, save news to this folder in file rss_news.fb2.
         """
 
         self.source = source
@@ -35,8 +40,13 @@ class RssParser:
         self.verbose = verbose
         self.limit = limit
         self.date = date
+        self.to_html_path = to_html
+        self.to_fb2_path = to_fb2
+
         self.content = ""
         self.news_amount = 0
+        self.full_path_to_image_cache = ""
+        self.binaries = ""
 
         self.print_if_verbose(
             f"Start program. \n\n"
@@ -71,6 +81,14 @@ class RssParser:
                         self.print_if_verbose(f"'run_parsing' method calls 'print_content_from_cache' method: \n")
                         self.print_content_from_cache(self.rss_feed)
 
+                if self.to_html_path:
+                    self.print_if_verbose(f"'run_parsing' method calls 'save_to_html' method: \n")
+                    self.save_to_html(self.rss_feed)
+
+                if self.to_fb2_path:
+                    self.print_if_verbose(f"'run_parsing' method calls 'save_to_fb2' method: \n")
+                    self.save_to_fb2(self.rss_feed)
+
         else:
             self.print_if_verbose(
                 f"Method 'run_parsing' is working: \n"
@@ -90,6 +108,14 @@ class RssParser:
                 else:
                     self.print_if_verbose(f"'run_parsing' method calls 'print_content' method: \n")
                     self.print_content(self.rss_feed)
+
+                if self.to_html_path:
+                    self.print_if_verbose(f"'run_parsing' method calls 'save_to_html' method: \n")
+                    self.save_to_html(self.rss_feed)
+
+                if self.to_fb2_path:
+                    self.print_if_verbose(f"'run_parsing' method calls 'save_to_fb2' method: \n")
+                    self.save_to_fb2(self.rss_feed)
 
         self.print_if_verbose(f"Program execution completed!")
 
@@ -114,7 +140,7 @@ class RssParser:
 
             self.print_if_verbose(
                 f"Content of the RSS-source has been received successfully. \n"
-                f"Tere are {self.news_amount} news in the feed. \n"
+                f"There are {self.news_amount} news in the feed. \n"
                 f"Method 'get_content' is finished. \n"
             )
 
@@ -146,12 +172,32 @@ class RssParser:
 
         self.print_if_verbose(f"Adding data to the work dict 'rss_feed'...")
 
-        for item in channel.iterfind('item'):
+        POSSIBLE_IMAGE_TAGS = ("content", "thumbnail", "image")
+        POSSIBLE_IMAGE_ATTR = ("url", "href")
+
+        for item in channel.iterfind("item"):
             child_news = {}
-            child_news["Title"] = item.findtext('title')
-            child_news["Link"] = item.findtext('link')
-            child_news["PubDate"] = self.get_formatted_date(item.findtext('pubDate'))
-            child_news["Source"] = item.findtext('source')
+            child_news["Title"] = item.findtext("title")
+            child_news["Link"] = item.findtext("link")
+            child_news["PubDate"] = self.get_formatted_date(item.findtext("pubDate"))
+            child_news["Source"] = item.findtext("source")
+            child_news["ImageLink"] = None
+            child_news["ImageCacheName"] = None
+
+            for tag in POSSIBLE_IMAGE_TAGS:
+                for item_field in item:
+                    if tag in item_field.tag:
+                        for attr in POSSIBLE_IMAGE_ATTR:
+                            if attr in item_field.attrib:
+                                child_news["ImageLink"] = item_field.attrib[attr]
+                                child_news["ImageCacheName"] = \
+                                    f"{''.join(char for char in child_news['Link'] if char.isalnum())}.jpg"
+                                break
+                    if child_news["ImageLink"]:
+                        break
+                if child_news["ImageLink"]:
+                    break
+
             rss_feed["News"].append(child_news)
 
             append_news_to_rss_feed += 1
@@ -177,8 +223,13 @@ class RssParser:
 
         if not os.path.exists("cache"):
             os.mkdir("cache")
-
         os.chdir("cache")
+
+        if not os.path.exists("image_cache"):
+            os.mkdir("image_cache")
+        os.chdir("image_cache")
+        self.full_path_to_image_cache = os.getcwd()
+        os.chdir("..")
 
         try:
             with open("rss_reader_cache.json", "r", encoding="utf-8") as cache_file:
@@ -194,10 +245,13 @@ class RssParser:
                 for news in rss_feed["News"]:
                     if news not in feed[rss_feed_to_cache_title]:
                         feed[rss_feed_to_cache_title].append(news)
+                        self.save_image_to_image_cache(news["ImageLink"], f"{news['ImageCacheName']}")
                 is_append_flag = True
 
         if not is_append_flag:
             data_from_cache.append({rss_feed_to_cache_title: rss_feed["News"]})
+            for news in rss_feed["News"]:
+                self.save_image_to_image_cache(news["ImageLink"], f"{news['ImageCacheName']}")
 
         with open("rss_reader_cache.json", "w", encoding="utf-8") as cache_file:
             json.dump(data_from_cache, cache_file, indent=3)
@@ -205,11 +259,33 @@ class RssParser:
         os.chdir("..")
 
         self.print_if_verbose(
-            f"News were added to cache succesыfully. \n"
+            f"News were added to cache successfully. \n"
             f"Method 'save_news_to_cache' is finished. \n"
         )
 
         return data_from_cache
+
+    def save_image_to_image_cache(self, image_url, image_name):
+        """Method saves images to local image_cache"""
+
+        self.print_if_verbose(
+            f"Method 'save_image_to_image_cache' is working: \n"
+            f"Saving image to image_cache... \n"
+        )
+
+        os.chdir("image_cache")
+
+        try:
+            urlretrieve(image_url, image_name)
+            self.print_if_verbose(f"Image was saved successfully. \n")
+        except Exception as error:
+            self.print_if_verbose(f"{error} - image was not saved. \n")
+
+        self.print_if_verbose(f"Method 'save_image_to_image_cache' is finished. \n")
+
+        os.chdir("..")
+
+        return True
 
     def get_content_from_cache(self):
         """
@@ -229,6 +305,13 @@ class RssParser:
         except Exception as error:
             print(f"{error}: cache does not exists!")
             return
+
+        try:
+            os.chdir("image_cache")
+            self.full_path_to_image_cache = os.getcwd()
+            os.chdir("..")
+        except:
+            pass
 
         try:
             with open("rss_reader_cache.json", "r", encoding="utf-8") as cache_file:
@@ -335,7 +418,7 @@ class RssParser:
         return "Content is printed from cache"
 
     def print_if_verbose(self, log):
-        """Method prints logs in stdout"""
+        """Method prints logs to stdout"""
 
         if self.verbose:
             print(log)
@@ -363,6 +446,126 @@ class RssParser:
                 pass
         return formatted_date
 
+    def save_to_html(self, rss_feed, date=None):
+        """Method saves RSS-feed content to HTML-file.
+        If path is wrong returns exception."""
+
+        self.print_if_verbose(f"Method 'save_to_html' is working: \n")
+
+        add_to_html_file = "<!DOCTYPE html>\n<html lang='en'>\n<head>\n<meta charset='UTF-8'>\n</head>\n<body>\n"
+
+        if not os.path.exists(self.to_html_path):
+            try:
+                os.makedirs(self.to_html_path)
+            except Exception as error:
+                print(f"Exception {error} - wrong path! File was not created!")
+                return
+
+        os.chdir(self.to_html_path)
+
+        with open("rss_news.html", "w", encoding="utf-8") as html_file:
+            html_file.writelines(add_to_html_file)
+
+            if self.date:
+                for news in rss_feed:
+                    html_file.writelines(self.add_to_html(news))
+            else:
+                for news in rss_feed["News"]:
+                    html_file.writelines(self.add_to_html(news))
+
+            add_to_html_file = "</body>\n</html>\n"
+            html_file.writelines(add_to_html_file)
+
+        self.print_if_verbose(
+            f"File {self.to_html_path}{os.sep}rss_news.html was created successfully. \n"
+            f"Method 'save_to_html' is finished.\n"
+        )
+
+        return True
+
+    def add_to_html(self, news: dict) -> str:
+        """
+        Method converts a news to HTML-format.
+        :param news: dict
+        :return: str, add_to_html_file
+        """
+
+        add_to_html_file = ""
+        add_to_html_file += f"<h2>Title: {news['Title']}</h2>\n"
+        add_to_html_file += f"<a href={news['Link']}>Link to news</a><br>\n"
+        add_to_html_file += f"<p>PubDate: {news['PubDate']}</p>\n"
+        add_to_html_file += f"<p>Source: {news['Source']}</p>\n"
+        full_path_to_image = f"{self.full_path_to_image_cache}{os.sep}{news['ImageCacheName']}"
+        add_to_html_file += f"<img height='120' src='{full_path_to_image}' alt='No image'>\n<br>\n<br>\n"
+
+        return add_to_html_file
+
+    def save_to_fb2(self, rss_feed, date=None):
+        """Method saves RSS-feed content to FB2-file.
+        If path is wrong returns exception."""
+
+        self.print_if_verbose(f"Method 'save_to_fb2' is working: \n")
+
+        if not os.path.exists(self.to_fb2_path):
+            try:
+                os.makedirs(self.to_fb2_path)
+            except Exception as error:
+                print(f"Exception {error} - wrong path! File was not created!")
+                return
+
+        os.chdir(self.to_fb2_path)
+
+        with open("rss_news.fb2", "w", encoding="utf-8") as fb2_file:
+            fb2_file.writelines(f"<?xml version='1.0' encoding='UTF-8'?>\n")
+            fb2_file.writelines(
+                f"<FictionBook xmlns='http://www.gribuser.ru/xml/fictionbook/2.0' "
+                f"xmlns:l='http://www.w3.org/1999/xlink'>\n")
+            fb2_file.writelines(f"  <body>\n")
+            fb2_file.writelines(f"    <section>\n")
+
+            if self.date:
+                for news in rss_feed:
+                    fb2_file.writelines(self.add_to_fb2(news))
+            else:
+                for news in rss_feed["News"]:
+                    fb2_file.writelines(self.add_to_fb2(news))
+
+            fb2_file.writelines(f"    </section>\n")
+            fb2_file.writelines("  </body>\n")
+            fb2_file.writelines(self.binaries)
+            fb2_file.writelines("</FictionBook>\n")
+
+        self.print_if_verbose(
+            f"File {self.to_fb2_path}{os.sep}rss_news.fb2 was created successfully. \n"
+            f"Method 'save_to_fb2' is finished.\n"
+        )
+
+        return True
+
+    def add_to_fb2(self, news: dict) -> str:
+        """
+        Method converts a news to FB2-format.
+        :param news: dict
+        :return: str, add_to_fb2_file
+        """
+
+        add_to_fb2_file = ""
+        add_to_fb2_file += f"      <p>Title: {news['Title']}</p>\n"
+        add_to_fb2_file += f"      <p><a l:href='{news['Link']}'> 'Link to news' </a></p>\n"
+        add_to_fb2_file += f"      <p>PubDate: {news['PubDate']}</p>\n"
+        add_to_fb2_file += f"      <p>Source: {news['Source']}</p>\n"
+
+        if news['ImageCacheName']:
+            add_to_fb2_file += f"      <p><image l:href='#{news['ImageCacheName']}'/></p>\n"
+            with open(f"{self.full_path_to_image_cache}{os.sep}{news['ImageCacheName']}", "rb") as img_file:
+                b64_string = base64.b64encode(img_file.read())
+                self.binaries += f"<binary id='{news['ImageCacheName']}' " \
+                                 f"content-type='image/jpeg'>{b64_string.decode('utf-8')}</binary>\n"
+
+        add_to_fb2_file += f"      <empty-line/>\n"
+
+        return add_to_fb2_file
+
 
 def main_program():
     """
@@ -379,10 +582,14 @@ def main_program():
     parser.add_argument("--verbose", help="Outputs verbose status messages", action="store_true")
     parser.add_argument("--limit", type=int, help="Limit (int) news topics if this parameter provided")
     parser.add_argument("--date", type=str, help="Date (str) in format YYYYMMDD. Print news from cache for this date")
+    parser.add_argument("--to_html", type=str, help="Path to folder where news will be saved in file rss_news.html")
+    parser.add_argument("--to_fb2", type=str, help="Path to folder where news will be saved in file rss_news.fb2")
 
     args = parser.parse_args()
 
-    rss_parser = RssParser(args.source, args.version, args.json, args.verbose, args.limit, args.date)
+    rss_parser = RssParser(args.source, args.version, args.json, args.verbose, args.limit, args.date, args.to_html,
+                           args.to_fb2)
+
     rss_parser.run_parsing()
 
 

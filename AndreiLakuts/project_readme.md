@@ -1,5 +1,5 @@
 # RSS reader.
-##Version 1.3
+##Version 1.4
 
 
 Author: Andrei Lakuts 
@@ -15,4 +15,5 @@ RSS parser was tested with these feeds:
    - https://people.onliner.by/feed
    - https://news.rambler.ru/rss/Vladikavkaz
    - https://news.google.com/rss
-   - https://feeds.simplecast.com/54nAGcIl  
+   - https://feeds.skynews.com/feeds/rss/home.xml
+   - https://www.theguardian.com/uk/rss 

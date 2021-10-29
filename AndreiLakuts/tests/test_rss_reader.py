@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """Unit-tests for RSS-reader."""
 
 import unittest
@@ -17,41 +18,27 @@ test_rss_feed = [{
     'Title': "Test title",
     'Link': 'https://test.link.com',
     'PubDate': '20211022',
-    'Source': 'Test source'
+    'Source': 'Test source',
+    'ImageLink': None,
+    'ImageCacheName': None
 }]
 
 # test_rss_feed for test save_news_to_cache() method
 test_to_cache_rss_feed = {
     'Feed': 'Test Feed',
     'Description': 'Test Description',
-    'Link': 'https://news.yahoo.com/rss/',
+    'Link': 'https://news.test.com/rss/',
     'Language': 'en-US',
     'News': [
-        {'Title': "Test Title",
+        {'Title': 'Test Title',
          'Link': 'https://test.link.com/test.html',
          'PubDate': '20211022',
-         'Source': 'Test Source'}
+         'Source': 'Test Source',
+         'ImageLink': None,
+         'ImageCacheName': None}
     ]
 }
 
-# test result for test save_news_to_cache() method
-test_to_cache_rss_feed_result = [
-    {'https://news.yahoo.com/rss/': [
-        {'Link': 'https://test.link.com/test.html',
-         'PubDate': '20211022',
-         'Source': 'Test Source',
-         'Title': 'Test Title'}
-    ]
-    }
-]
-
-# test result for test get_content_from_cache() method
-test_from_cache_rss_feed_result = [
-    {'Link': 'https://test.link.com/test.html',
-     'PubDate': '20211022',
-     'Source': 'Test Source',
-     'Title': 'Test Title'}
-]
 
 
 class TestRssParser(unittest.TestCase):
@@ -61,15 +48,19 @@ class TestRssParser(unittest.TestCase):
         """setUp"""
 
         self.test_good_source_rss_reader = RssParser(good_source, verbose=True, version=False, json=False,
-                                                     limit=3, date=None)
+                                                     limit=3, date=None, to_html=None, to_fb2=None)
+
         self.test_bad_source_rss_reader = RssParser(bad_source, verbose=False, version=False, json=False,
-                                                    limit=None, date=None)
+                                                    limit=None, date=None, to_html=None, to_fb2=None)
+
         self.test_version_rss_reader = RssParser(good_source, verbose=False, version=True, json=False, limit=3,
-                                                 date=None)
+                                                 date=None, to_html=None, to_fb2=None)
         self.test_bad_limit_rss_reader = RssParser(good_source, verbose=False, version=False, json=False, limit=-3,
-                                                   date=None)
+                                                   date=None, to_html=None, to_fb2=None)
+
         self.test_date_rss_reader = RssParser(good_source, verbose=False, version=False, json=False, limit=2,
-                                              date=20211022)
+                                              date=20211022, to_html=None, to_fb2=None)
+
         self.content = self.test_good_source_rss_reader.get_content()
         self.rss_feed = self.test_good_source_rss_reader.process_content(self.content)
         self.limit_rss_feed = self.test_good_source_rss_reader.process_content(self.content)
@@ -78,15 +69,17 @@ class TestRssParser(unittest.TestCase):
         """Tests for RssParser.run_pursing"""
 
         # Test "--version"
-        self.assertEqual(self.test_version_rss_reader.run_parsing(), "Version 1.3")
+        self.assertEqual(self.test_version_rss_reader.run_parsing(), "Version 1.4")
+
         # Test wrong limit "--limit -3"
         self.assertEqual(self.test_bad_limit_rss_reader.run_parsing(), "Limit must be greater than 0!")
 
     def test_get_content(self):
         """Tests for RssParser.get_content"""
 
-        # Test: get_content().tag mast be "channel"
+        # Test: get_content().tag must be "channel"
         self.assertEqual(self.test_good_source_rss_reader.get_content().tag, "channel")
+
         # Test: type(self.content) must be xml.etree.ElementTree.Element
         self.assertEqual(type(self.content), xml.etree.ElementTree.Element)
 
@@ -95,6 +88,7 @@ class TestRssParser(unittest.TestCase):
 
         # Test: type(self.content) must be dict
         self.assertEqual(type(self.test_good_source_rss_reader.process_content(self.content)), dict)
+
         # Test: if "--limit 3" len(self.limit_rss_feed["News"]) must be 3
         self.assertEqual(len(self.limit_rss_feed["News"]), 3)
 
@@ -132,13 +126,7 @@ class TestRssParser(unittest.TestCase):
     def test_save_news_to_cache(self):
         """Test for RssParser.save_news_to_cache"""
 
-        self.assertEqual(self.test_good_source_rss_reader.save_news_to_cache(test_to_cache_rss_feed),
-                         test_to_cache_rss_feed_result)
-
-    def test_get_content_from_cache(self):
-        """Test for RssParser.get_content_from_cache"""
-
-        self.assertEqual(self.test_date_rss_reader.get_content_from_cache(), test_from_cache_rss_feed_result)
+        self.assertEqual(type(self.test_good_source_rss_reader.save_news_to_cache(test_to_cache_rss_feed)), list)
 
     def test_runparsing(self):
         """Test for RssParser.run_parsing"""
